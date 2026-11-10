@@ -86,6 +86,9 @@ database, generated once). Nothing system-wide.
 5. **Accept:** clean `lake build`, no `sorry`, `#print axioms` shows only
    `propext`, `Classical.choice`, `Quot.sound` (or a subset). `jj commit`,
    stop.
+   Done 2026-11-10: axioms `[propext, Quot.sound]`; `run` written as
+   structural recursion rather than `Nat.iterate` (same meaning, simpler
+   proofs).
 
 ## M3: lift the netlist, prove refinement
 
