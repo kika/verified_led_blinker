@@ -200,8 +200,10 @@ and a `jj` commit. Stop and report at the end of each one.
   `xc7frames2bit` → `.bit`. Take exact commands and flags from the openXC7
   demo projects, not from memory.
 - Synthesis flags: flatten, and disable inference of shift registers, block
-  RAM and DSP. The netlist should contain only LUTs, `FDRE`, `CARRY4`, IO
-  buffers and `BUFG`.
+  RAM and DSP. The netlist should contain only LUTs, `INV`, `FDRE`, `CARRY4`,
+  IO buffers and `BUFG`. (`INV` added in M1 by Kirill's decision: Yosys builds
+  `cnt + 1` as an adder whose bit-0 propagate term is `~cnt[0]` and emits it
+  as `INV`; no flag avoids it. nextpnr packs it into a LUT1.)
 - **Accept:** Kirill sees the LED blink at roughly the expected rate.
 
 ### M2: specification and its proof, pure Lean
@@ -227,8 +229,12 @@ and a `jj` commit. Stop and report at the end of each one.
     power-up value is `INIT`.
   - `CARRY4`: `c0 = CI || CYINIT`; for i in 0..3: `O[i] = S[i] xor c_i`,
     `CO[i] = if S[i] then c_i else DI[i]`, `c_(i+1) = CO[i]`.
+  - `INV`: `O = !I`.
   - `IBUF`, `OBUF`, `BUFG`: identity.
-  Cross-check each against Yosys's `techlibs/xilinx/cells_sim.v` and write
+  The reference for each primitive is AMD UG953 (7 Series Libraries Guide),
+  not Yosys: using Yosys as the oracle for both the netlist and the meaning
+  of its cells would be circular. Cross-check each against Yosys's
+  `techlibs/xilinx/cells_sim.v` as a second, executable reference, and write
   unit tests comparing the Lean function with a Yosys or Verilator simulation
   of the same cell on exhaustive or random inputs.
 - `Netlist.lean`: a data type for a flat netlist and a parser for the Yosys

@@ -62,14 +62,17 @@ database, generated once). Nothing system-wide.
 2. `board/astria.xdc`: `clk` on G11 and `led` on E11, both LVCMOS33. Clock
    period constraint 10 ns if nextpnr-xilinx accepts it.
 3. `Makefile` taken from the openXC7 demo for this flow:
-   `yosys synth_xilinx -flatten -nosrl -nobram -nodsp` (exact flag names
-   checked against `help synth_xilinx`) -> JSON -> `nextpnr-xilinx` -> FASM ->
+   `yosys synth_xilinx -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp
+   -nowidelut` (flag names checked against `help synth_xilinx`; the demo's
+   `-abc9` dropped, it gives identical cells here) -> JSON -> `nextpnr-xilinx` -> FASM ->
    `fasm2frames` -> `xc7frames2bit` -> `build/blinky.bit`.
-4. Check the netlist contains only `LUT*`, `FDRE`, `CARRY4`, `IBUF`, `OBUF`,
-   `BUFG`. Anything else = adjust flags, not accept.
+4. Check the netlist contains only `LUT*`, `INV`, `FDRE`, `CARRY4`, `IBUF`,
+   `OBUF`, `BUFG` (`make check-cells`). Result: 27 FDRE, 7 CARRY4, 1 INV,
+   IBUF, OBUF, BUFG; no LUTs. `INV` allowed by Kirill's decision.
 5. **Show Kirill the pin assignments and wait for confirmation**, then
    `openFPGALoader -c ft232 build/blinky.bit` (SRAM load only, no flash).
 6. **Accept:** LED0 blinks with about 1.34 s period. `jj commit`, stop.
+   Done 2026-11-10: Kirill confirmed the blink.
 
 ## M2: Spec and its proof
 
