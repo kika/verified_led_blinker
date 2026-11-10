@@ -18,7 +18,7 @@ CABLE  := ft232
 SYNTH_OPTS := -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp -nowidelut
 
 .DELETE_ON_ERROR:
-.PHONY: all program check-cells clean
+.PHONY: all program check-cells proof test-prims mutation verify clean
 
 all: $(BUILD)/$(TOP).bit check-cells
 
@@ -47,6 +47,32 @@ check-cells: $(BUILD)/$(TOP).json
 	types=sorted({c["type"] for c in cells}); bad=[t for t in types if t not in ok]; \
 	print("cell types:", " ".join(types)); \
 	sys.exit("disallowed cell types: " + " ".join(bad) if bad else 0)' $<
+
+# Run the Lean proof against the current netlist and record what it was run
+# against. lake rebuilds the proof whenever build/blinky.json changes
+# (lean/lakefile.toml declares it as an input), so PROOF.txt can only be
+# written for the JSON and .bit that exist when the proof succeeds.
+proof: $(BUILD)/$(TOP).json $(BUILD)/$(TOP).bit
+	cd lean && lake build
+	{ echo "Proof run: $$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+	  echo; echo "SHA-256:"; sha256sum $(BUILD)/$(TOP).json $(BUILD)/$(TOP).bit; \
+	  echo; cd lean && lake env lean ../test/Audit.lean; } > $(BUILD)/PROOF.txt
+	cat $(BUILD)/PROOF.txt
+
+# Compare lean/VeryFPGA/Prims.lean with Yosys's cells_sim.v on every input.
+test-prims: | $(BUILD)
+	mkdir -p $(BUILD)/prims
+	iverilog -g2012 -o $(BUILD)/prims/tb.vvp -s prims_tb test/prims_tb.v \
+	    $(OSS_CAD_SUITE_ROOT)/share/yosys/xilinx/cells_sim.v
+	vvp -n $(BUILD)/prims/tb.vvp > $(BUILD)/prims/vectors.txt
+	cd lean && lake env lean ../test/PrimsTest.lean
+
+# The proof must reject mutated copies of the netlist.
+mutation: $(BUILD)/$(TOP).json
+	cd lean && lake build
+	test/mutation.sh
+
+verify: all proof test-prims mutation
 
 # SRAM load only; does not touch the configuration flash.
 program: $(BUILD)/$(TOP).bit

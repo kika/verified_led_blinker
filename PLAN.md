@@ -92,27 +92,19 @@ database, generated once). Nothing system-wide.
 
 ## M3: lift the netlist, prove refinement
 
-1. `Prims.lean`: LUT, FDRE, CARRY4, IBUF/OBUF/BUFG per `CLAUDE.md`,
-   cross-checked against Yosys `techlibs/xilinx/cells_sim.v`. Tests: exhaustive
-   for LUTs up to the sizes used and for CARRY4 (2^13 inputs), compared with
-   Yosys `sim` or Verilator output.
-2. `Netlist.lean`: data type plus parser over `Lean.Json`. Hard errors for
-   unknown cell / parameter, `x` bits, undriven nets, combinational loops,
-   flops not on the single clock. Test the `INIT` bit-order convention.
-3. `Impl.lean`: state = flop vector, step = evaluate combinational cone,
-   output = LED port value.
-4. Embedding choice: start deep (Lean evaluates the parsed netlist). If
-   `bv_decide` cannot get through the step lemma that way, fall back to a
-   generated shallow `.lean` file and record the extra trusted generator in
-   `TRUST.md`.
-5. `Refine.lean`: abstraction flop-values -> `BitVec 27`; init, step, output
-   lemmas; induction; compose with M2.
-6. Build ties netlist JSON and proof together; record SHA-256 of JSON and
-   `.bit` next to the proof.
-7. `TRUST.md` with the theorem, assumptions list, `#print axioms` output.
-8. **Accept:** no `sorry`; axioms pasted; mutation tests (one LUT `INIT` bit
-   flipped, one flop pair swapped, both on copies) make the proof fail.
-   `jj commit`, stop. MVP done.
+Done 2026-11-10. Files: `lean/VeryFPGA/{Prims,Netlist,Impl,Blinky,DefByEval,Refine}.lean`,
+`test/{prims_tb.v,PrimsTest.lean,mutate.py,mutation.sh,Audit.lean}`.
+`make verify` = bitstream + proof + primitive cross-check + mutation test,
+writing `build/PROOF.txt` (hashes + axioms). Details and results in `TRUST.md`.
+
+Deviations from the original plan:
+- No LUTs in the netlist, so no LUT semantics and no LUT `INIT` mutation;
+  replaced by a `CARRY4 CYINIT` mutation and an FDRE `INIT` mutation.
+- The netlist is parsed at build time (`load_netlist`), not inside the
+  kernel; `compile netlist` is evaluated at build time by `def_by_eval` and
+  re-checked by the kernel.
+- `bv_decide` adds a generated axiom (`step_ok._native.bv_decide.ax_1_27`)
+  for its compiled certificate check; listed in `TRUST.md`.
 
 ## M4
 

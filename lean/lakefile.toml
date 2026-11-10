@@ -2,5 +2,12 @@ name = "VeryFPGA"
 version = "0.1.0"
 defaultTargets = ["VeryFPGA"]
 
+# The netlist the proof is about. Declared as an input so that a changed
+# netlist rebuilds VeryFPGA.Blinky and every proof that imports it.
+[[input_file]]
+name = "blinkyJson"
+path = "../build/blinky.json"
+
 [[lean_lib]]
 name = "VeryFPGA"
+needs = ["blinkyJson"]
