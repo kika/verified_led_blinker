@@ -1,0 +1,14 @@
+# Source this file (bash/zsh): . ./env.sh
+# Versions are recorded in TOOLS.md.
+
+VERYFPGA_TOOLS="$HOME/opt/veryfpga"
+
+export OPENXC7_ROOT="$VERYFPGA_TOOLS/openxc7"
+export OSS_CAD_SUITE_ROOT="$VERYFPGA_TOOLS/oss-cad-suite"
+export PRJXRAY_DB_DIR="$OPENXC7_ROOT/share/nextpnr/external/prjxray-db"
+export CHIPDB_DIR="$OPENXC7_ROOT/share/nextpnr/himbaechel/xilinx"
+
+export FPGA_PART="xc7s50ftgb196-1"
+export FPGA_FAMILY="spartan7"
+
+export PATH="$OPENXC7_ROOT/bin:$OSS_CAD_SUITE_ROOT/bin:$HOME/.elan/bin:$PATH"

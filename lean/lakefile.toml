@@ -1,0 +1,6 @@
+name = "VeryFPGA"
+version = "0.1.0"
+defaultTargets = ["VeryFPGA"]
+
+[[lean_lib]]
+name = "VeryFPGA"

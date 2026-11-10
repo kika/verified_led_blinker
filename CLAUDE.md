@@ -127,14 +127,15 @@ source next to each value in `board/FACTS.md`.
 | Fact | Value | Source |
 |---|---|---|
 | Board | Adiuvo Engineering Astria S7-50 (earlier name: Leonidas). FPGA plus an RP2040, 4 user LEDs, 4 slide switches, SDRAM, Pmods | vendor product page |
-| FPGA part | XC7S50 | vendor product page; confirm by JTAG IDCODE |
+| FPGA part | XC7S50, confirmed by JTAG IDCODE 0x362f093 | vendor product page; `openFPGALoader -c ft232 --detect` |
 | Package | FTGB196 | Kirill |
 | Speed grade | Assume -1 (slowest, conservative). Not readable from the chip marking. Affects timing analysis only, not the bitstream. Use part name `xc7s50ftgb196-1`; correct it if the vendor board files say otherwise | assumption |
 | Chip marking | XC7S50 / FTGB196ABX2533 / D4BDT096A | photo from Kirill |
-| Clock source, pin and frequency | TODO. Check whether the FPGA has its own oscillator or takes its clock from the RP2040 | schematic |
-| User LED pin, IO standard, polarity | TODO | schematic and vendor XDC |
-| JTAG interface and openFPGALoader cable name | believed onboard FTDI, chip model TODO | schematic |
-| Bank voltage for the LED and clock pins | TODO | schematic |
+| Clock source, pin and frequency | Own oscillator U10 (KC2520Z100), 100 MHz, into G11 (`IO_L12P_T1_MRCC_14`) via 33 ohm, LVCMOS33. Not from the RP2040 | KiCad netlist, vendor XDC and board.xml; see `board/FACTS.md` |
+| User LED pin, IO standard, polarity | LED0..3 = E11, M10, A10, D12; LVCMOS33; active high (pin -> 110 ohm -> LED -> GND). Blinky uses LED0 / E11 | KiCad netlist, vendor XDC |
+| JTAG interface and openFPGALoader cable name | FTDI FT232HL, ADBUS0..3 = TCK/TDI/TDO/TMS, USB connector J1. Cable `ft232` (`openFPGALoader -c ft232`), confirmed; IDCODE 0x362f093 = xc7s50 | KiCad netlist |
+| Bank voltage for the LED and clock pins | Bank 14 VCCO = 3.3 V (banks 0 and 34 also 3.3 V) | KiCad netlist |
+| Vendor files target XC7S6, not XC7S50 | Same FTGB196 footprint ("compatible up to XC7S50"). All 100 IO pins checked against X-Ray `xc7s50ftgb196-1/package_pins.csv`: identical | user guide p.12; `board/FACTS.md` |
 
 Sources to read, in this order. Kirill has the schematic; ask him to put it
 in `board/`. The vendor's reference designs, XDC, schematics and Vivado board

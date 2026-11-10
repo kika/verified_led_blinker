@@ -1,0 +1,4 @@
+# FT232H JTAG adapter on the Astria/Leonidas board (USB connector J1).
+# 0403:6014 is the FTDI default ID for the FT232H. The board's 93LC56 EEPROM
+# could change it: check `lsusb` with the board attached before installing.
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6014", MODE="0660", GROUP="plugdev", TAG+="uaccess"
