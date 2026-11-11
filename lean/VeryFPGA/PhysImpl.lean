@@ -284,4 +284,9 @@ def physCompile (d : PhysDesign) : Option Machine := do
   guard (t.closed && !t.eval [])
   return { init := fl.map (ffInit d), next, out }
 
+/-- Level of the LED pad of routed design `d` during clock cycle `n`; `none`
+if the model does not accept the design. -/
+def ledAt (d : PhysDesign) (n : Nat) : Option Bool :=
+  (physCompile d).map (·.ledAt n)
+
 end VeryFPGA.Phys

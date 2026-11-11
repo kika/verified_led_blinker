@@ -3,7 +3,9 @@ import VeryFPGA
 
 open VeryFPGA
 
+-- M3: the Yosys netlist
 #check @netlist_blinks
-#check @netlist_refines_spec
 #print axioms netlist_blinks
-#print axioms netlist_refines_spec
+-- M4a: the routed design, decoded from the FASM
+#check @phys_blinks
+#print axioms phys_blinks

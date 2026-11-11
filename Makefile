@@ -18,7 +18,7 @@ CABLE  := ft232
 SYNTH_OPTS := -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp -nowidelut
 
 .DELETE_ON_ERROR:
-.PHONY: all program check-cells proof test-prims mutation fasm-check route-check phys-check verify clean
+.PHONY: all program check-cells proof test-prims mutation fasm-check route-check phys-check phys-mutation verify clean
 
 all: $(BUILD)/$(TOP).bit check-cells
 
@@ -48,14 +48,15 @@ check-cells: $(BUILD)/$(TOP).json
 	print("cell types:", " ".join(types)); \
 	sys.exit("disallowed cell types: " + " ".join(bad) if bad else 0)' $<
 
-# Run the Lean proof against the current netlist and record what it was run
-# against. lake rebuilds the proof whenever build/blinky.json changes
-# (lean/lakefile.toml declares it as an input), so PROOF.txt can only be
-# written for the JSON and .bit that exist when the proof succeeds.
-proof: $(BUILD)/$(TOP).json $(BUILD)/$(TOP).bit
+# Run the Lean proofs against the current netlist and FASM and record what
+# they were run against. lake rebuilds the proofs whenever build/blinky.json
+# or build/blinky.fasm changes (lean/lakefile.toml declares them as inputs),
+# so PROOF.txt can only be written for the files that exist when the proofs
+# succeed.
+proof: $(BUILD)/$(TOP).json $(BUILD)/$(TOP).fasm $(BUILD)/$(TOP).bit
 	cd lean && lake build
 	{ echo "Proof run: $$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
-	  echo; echo "SHA-256:"; sha256sum $(BUILD)/$(TOP).json $(BUILD)/$(TOP).bit; \
+	  echo; echo "SHA-256:"; sha256sum $(BUILD)/$(TOP).json $(BUILD)/$(TOP).fasm $(BUILD)/$(TOP).bit; \
 	  echo; cd lean && lake env lean ../test/Audit.lean; } > $(BUILD)/PROOF.txt
 	cat $(BUILD)/PROOF.txt
 
@@ -90,7 +91,12 @@ phys-check: $(BUILD)/$(TOP).fasm
 	cd lean && lake lean ../test/PhysSim.lean
 	test/phys_mutation.sh
 
-verify: all proof test-prims mutation fasm-check route-check phys-check
+# M4a.4: the routed-design proof must reject FASM copies with one logic change.
+phys-mutation: $(BUILD)/$(TOP).fasm
+	cd lean && lake build
+	test/phys_proof_mutation.sh
+
+verify: all proof test-prims mutation fasm-check route-check phys-check phys-mutation
 
 # SRAM load only; does not touch the configuration flash.
 program: $(BUILD)/$(TOP).bit
