@@ -105,13 +105,18 @@ def siteOk (s : PSite) : Bool :=
     -- a used reset must be synchronous to 0 (FDRE)
     (!s.has "SRUSEDMUX" || (s.has "FFSYNC" &&
       (List.range 4).all (fun n => !ffUsed s n || s.has s!"{letter n}FF.ZRST"))) &&
-    -- used flip-flops clock on the rising edge
-    ((List.range 4).all (fun n => !ffUsed s n) || s.has "NOCLKINV")
+    -- flip-flops clock on the rising edge: `CLKINV` (one positive bit) is
+    -- absent. `NOCLKINV` is the same bit cleared, carries no information,
+    -- and is accepted but not required (a decoded bitstream never lists it).
+    -- `CLKINV` is also outside `sliceFeatures`; this states the reason.
+    !s.has "CLKINV"
   | "OLOGICE3" => s.features.all ologicFeatures.contains && s.words.isEmpty
   | "ILOGICE3" => s.features.all (· ∈ ["ZINV_D"]) && s.words.isEmpty
   | "IDELAYE2" => s.features.all (· ∈ ["IDELAY_TYPE_FIXED"]) && s.words.isEmpty
   | "IOB33" | "IOB33M" | "IOB33S" =>
-    (sameSet s.features clockPadFeatures || sameSet s.features ledPadFeatures) && s.words.isEmpty
+    -- a pad with no features is unconfigured and assumed not to drive
+    (s.features.isEmpty || sameSet s.features clockPadFeatures ||
+      sameSet s.features ledPadFeatures) && s.words.isEmpty
   | "BUFGCTRL" =>
     s.features.all (· ∈ ["IN_USE", "IS_IGNORE1_INVERTED", "ZINV_CE0", "ZINV_S0"]) &&
     s.words.isEmpty

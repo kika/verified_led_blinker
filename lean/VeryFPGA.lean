@@ -14,3 +14,5 @@ import VeryFPGA.Phys
 import VeryFPGA.PhysImpl
 import VeryFPGA.BlinkyPhys
 import VeryFPGA.PhysRefine
+import VeryFPGA.Bitstream
+import VeryFPGA.BlinkyBit

@@ -1,19 +1,19 @@
 # Trust ledger
 
-Status: **M4a complete** (routed design proved), 2026-11-11. M3 (Yosys
-netlist proved) stands alongside it. M4b (decoding the `.bit` itself) not
-started.
+Status: **M4b complete** (bitstream proved), 2026-11-11.
 
-Two top-level results, about two different artifacts:
+Three top-level results, about three artifacts of the same build:
 
 | Theorem | About | File |
 |---|---|---|
+| `bit_blinks` | the bitstream loaded on the board (`build/blinky.bit`) | `lean/VeryFPGA/BlinkyBit.lean` |
 | `phys_blinks` | the routed design nextpnr produced (`build/blinky.fasm`) | `lean/VeryFPGA/PhysRefine.lean` |
 | `netlist_blinks` | the Yosys netlist (`build/blinky.json`) | `lean/VeryFPGA/Refine.lean` |
 
-`phys_blinks` is the stronger statement: it covers packing, placement and
-routing, which `netlist_blinks` assumes. It does not depend on
-`netlist_blinks`; both are proved directly against the specification of M2.
+`bit_blinks` is the strongest: it covers packing, placement, routing, FASM
+generation and frame assembly. It is obtained from `phys_blinks` by a kernel
+check that the bitstream decodes to the identical machine (see section 0).
+`netlist_blinks` stands on its own, against the same specification (M2).
 
 Last proof run (`build/PROOF.txt`, `make proof`):
 
@@ -24,10 +24,98 @@ Last proof run (`build/PROOF.txt`, `make proof`):
 | `build/blinky.bit` | `d484258181108ae15c316e1af4bf5fc771c98e0c4d3fa738aba35d310fe87df9` |
 
 The `.bit` is the one loaded on the board and seen blinking in M1.
-`lean/lakefile.toml` declares the JSON and the FASM as inputs of the Lean
-library, so a changed netlist or FASM forces the proofs to re-run (tested
-for the JSON: a one-byte change rebuilds the proof; an unchanged file
-rebuilds nothing).
+`lean/lakefile.toml` declares the JSON, the FASM and the `.bit` as inputs of
+the Lean library, so a changed file forces the proofs to re-run.
+
+## 0. The bitstream (M4b)
+
+```lean
+theorem VeryFPGA.bit_blinks :
+    Phys.clockPad blinkyBitPhys = some "G11" ∧ Phys.ledPad blinkyBitPhys = some "E11" ∧
+    ∀ n, Phys.ledAt blinkyBitPhys n = some true ↔ n % 2 ^ Spec.N ≥ 2 ^ (Spec.N - 1)
+
+theorem VeryFPGA.bit_refines_spec (n : Nat) :
+    Phys.ledAt blinkyBitPhys n = some (Spec.led (Spec.run n))
+```
+
+`blinkyBitPhys` is `build/blinky.bit` decoded at build time
+(`Bitstream.lean`, `load_bit`) into X-Ray features, then wired
+(`Route.lean`) and grouped by site (`Phys.lean`) exactly as the FASM was.
+The kernel checks `physCompile blinkyBitPhys = some physMachine`
+(`physCompile_bit`, by `rfl`): the machine of the bitstream is the very
+machine proved correct for the routed design, so the routed design's
+theorem carries over without a second SAT proof.
+
+In words: **in the FPGA configured with `build/blinky.bit`, the clock
+enters at package pin G11, and the pad at package pin E11 is high during
+cycle `n` exactly when `n mod 2^27 ≥ 2^26`**, under the assumptions below.
+
+### What it does not say
+
+- Nothing about JTAG loading: that openFPGALoader delivers this file intact
+  is assumed (the device checks no CRC here: this bitstream writes none).
+- Nothing about the configuration registers beyond what the reader checks
+  (`IDCODE`, `FAR`, the write command, one frame data write): `COR0`,
+  `COR1`, `CTL0`, `CTL1`, `MASK`, `TIMER`, `WBSTAR` and the startup commands
+  are recorded (`make bit-check`) but not interpreted.
+- Time in seconds, electrical behaviour beyond the IO allow-list, and other
+  pads (assumed not to drive when unconfigured) as in section 1.
+
+### Assumed, not proved
+
+1. **The bitstream reader** (`lean/VeryFPGA/Bitstream.lean`): header part
+   name; packets per AMD UG470 (only writes, only to the registers listed
+   above; `IDCODE` = `0x362f093` from `part.json`; `FAR` = 0 and WCFG
+   before the single `FDRI` write); frame addresses in the auto-increment
+   order of `part.json` (block type, half, row, column, minor, two padding
+   frames per row; padding and block RAM frames must be zero); bits 12..0
+   of word 50 of each frame are the frame ECC and not configuration (no
+   X-Ray feature uses them; checked); features decoded with prjxray's
+   exact-match rule (`tile_segbits.py`), emitting only features with at
+   least one positive bit; every set bit must be explained.
+   The frame address order was cross-checked against `fasm2frames`: all
+   4970 non-zero frames land at the same addresses with the same contents,
+   apart from the ECC field.
+2. **Everything in section 1 except the FASM parser**: the site models,
+   the routing interpretation, the site grouping, the X-Ray database (now
+   also `segbits_*.db` bit positions and `part.json`), the physical
+   assumptions (clean clock, timing, power-up values), and Lean (kernel,
+   compiler, C compiler).
+3. **The configuration logic of the FPGA** loads the frames as UG470
+   describes, and the ECC field does not affect the configured function.
+
+Model changes made for M4b (both apply to section 1 as well):
+- `NOCLKINV` is no longer required; the rising-edge condition is "`CLKINV`
+  absent". A decoded bitstream never contains `NOCLKINV`: its only bit is a
+  cleared one.
+- Sites that drive an input of a configured site are included in the
+  design even without features (e.g. the IDELAY on the clock path, whose
+  only FASM feature `IDELAY_TYPE_FIXED` sets no bits), and a pad with no
+  features is accepted as unconfigured (assumed not to drive, as before).
+
+### `#print axioms`
+
+```
+'VeryFPGA.bit_blinks' depends on axioms: [propext, Classical.choice, Quot.sound, phys_step_ok._native.bv_decide.ax_1_38]
+```
+
+No axiom beyond those of `phys_blinks`.
+
+### Tests (`make bit-check`)
+
+The decode of `build/blinky.bit`: 1338 configuration bits set, all
+explained by 281 features, every one of which is in the FASM (LUT `INIT`
+words bit-identical). The FASM's 15 extra features are exactly its
+features without positive bits (14 `NOCLKINV`, 1 `IDELAY_TYPE_FIXED`).
+
+| Copy of the `.bit` | Change | Result |
+|---|---|---|
+| control | none | accepted; same machine |
+| lut_bit | `CLBLL_L_X2Y44` `ALUT.INIT[58]` (segbit 35_02) flipped in the frame data | rejected by `physCompile_bit`: different machine |
+| unknown_bit | a bit of a used tile that no segbits entry mentions, set | rejected by the reader: unexplained bit |
+| padding | a bit of a row padding frame set | rejected by the reader |
+| bram | a bit of a block RAM frame set | rejected by the reader |
+| idcode | `IDCODE` value changed | rejected by the reader |
 
 ## 1. The routed design (M4a)
 
@@ -57,10 +145,8 @@ cycles and 50 % duty, starting low at power-up. LED0 on E11 is active high
 
 ### What it does not say
 
-- **Nothing about the `.bit`.** The theorem is about the FASM file.
-  `fasm2frames`, `xc7frames2bit` and openFPGALoader are not covered; the
-  `.bit` hash records which bitstream was built from the proved FASM. That
-  is M4b.
+- **Nothing about the `.bit`.** The theorem is about the FASM file;
+  section 0 carries it to the bitstream.
 - **Nothing about time in seconds.** One step is one rising edge of the
   clock; 100 MHz (period 1.342 s) is a board fact.
 - **Nothing electrical beyond an allow-list**: the IO settings are checked
@@ -86,7 +172,8 @@ Ordered from closest to the theorem to furthest.
    | `?FFMUX.XOR`, `?FFMUX.O6` | flip-flop `D` from the carry sum / LUT `O6` | 015-clb-nffmux (names only) and UG474 |
    | CARRY4 `S` = LUT `O6`; slice outputs `A`..`D` = `O6`; `?Q` = flip-flop | | UG474 |
    | CARRY4 itself | `Prims.carry4` | UG953; matches Yosys on all 1024 inputs |
-   | `NOCLKINV` | required on slices with used flip-flops (rising edge) | 011 (as `CLKINV`); conservative |
+   | `CLKINV` | must be absent (rising edge); `NOCLKINV` (the same bit cleared) accepted, not required | 011-clb-ffconfig |
+   | Sites without features that drive a configured site | part of the design; a featureless pad is unconfigured | needed for the bitstream (M4b) |
    | `ZINV_X` | set means input `X` not inverted | feature names; consistent with the working board (BUFGCTRL `CE0` and OLOGIC `T1` both tied to 1) |
    | OLOGIC `OMUX.D1` + `OQUSED` | `OQ = D1` | feature names only |
    | OLOGIC `DATA_RATE_TQ.BUF` | `TQ = T1` (inverted unless `ZINV_T1`) | feature names only |
@@ -132,7 +219,8 @@ Ordered from closest to the theorem to furthest.
 8. **Flip-flops power up at their configured values** when configuration
    completes.
 9. **Everything after the FASM**: `fasm2frames`, `xc7frames2bit`,
-   openFPGALoader, and the FPGA's configuration logic.
+   openFPGALoader, and the FPGA's configuration logic (section 0 removes
+   the first two from the trusted base for `bit_blinks`).
 10. **Lean**: the kernel; Lean's compiler, runtime and the C compiler, both
     for `bv_decide`'s certificate check and because the readers above run as
     compiled code at build time.

@@ -141,9 +141,20 @@ def build (root device part : String) (feats : List XRay.Feature) (routing : Rou
         siteWords := (k, name, word) :: siteWords
     | [] => tileFeatures := (f.tile, f.feature) :: tileFeatures
     | _ => throw (IO.userError s!"{f.tile}.{f.feature}: matches more than one site")
-  -- Configured sites: those with at least one feature.
-  let configured := siteKeys.filter fun k =>
+  -- Sites in the design: those with at least one feature, and every site
+  -- that drives an input of one of those (possibly with no features, e.g.
+  -- an IDELAY whose only FASM feature sets no bits, or an unused pad).
+  -- Sorted by tile, site type and coordinates, so that the result does not
+  -- depend on the order in which the features or the routing list them.
+  let featured := siteKeys.filter fun k =>
     siteFeats.any (·.1 == k) || siteWords.any (·.1 == k)
+  let drivers := (routing.conns.filter fun c =>
+      featured.contains (c.input.tile, c.input.siteType, c.input.x, c.input.y) &&
+      c.source.siteType != "TIEOFF").map fun c =>
+    (c.source.tile, c.source.siteType, c.source.x, c.source.y)
+  let configured := (featured ++ drivers).eraseDups.mergeSort fun a b =>
+      a.1 < b.1 || (a.1 == b.1 && (a.2.1 < b.2.1 || (a.2.1 == b.2.1 &&
+        (a.2.2.1 < b.2.2.1 || (a.2.2.1 == b.2.2.1 && a.2.2.2 ≤ b.2.2.2)))))
   let index (t ty : String) (x y : Nat) : Option Nat := configured.idxOf? (t, ty, x, y)
   let srcOf (p : Route.SitePin) : Src :=
     if p.siteType == "TIEOFF" then
@@ -152,7 +163,7 @@ def build (root device part : String) (feats : List XRay.Feature) (routing : Rou
       else .none s!"TIEOFF pin {p.pin}"
     else match index p.tile p.siteType p.x p.y with
       | some i => .pin i p.pin
-      | none => .none s!"driven by {p.tile}/{nameOf p.tile p.siteType p.x p.y}.{p.pin}, a site with no features"
+      | none => .none s!"driven by {p.tile}/{nameOf p.tile p.siteType p.x p.y}.{p.pin}, a site outside the design"
   let sites := configured.map fun k@(t, ty, x, y) =>
     let g := nameOf t ty x y
     let driven := (routing.conns.filter fun c =>

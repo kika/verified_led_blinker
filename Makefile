@@ -18,7 +18,7 @@ CABLE  := ft232
 SYNTH_OPTS := -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp -nowidelut
 
 .DELETE_ON_ERROR:
-.PHONY: all program check-cells proof test-prims mutation fasm-check route-check phys-check phys-mutation verify clean
+.PHONY: all program check-cells proof test-prims mutation fasm-check route-check phys-check phys-mutation bit-check verify clean
 
 all: $(BUILD)/$(TOP).bit check-cells
 
@@ -96,7 +96,14 @@ phys-mutation: $(BUILD)/$(TOP).fasm
 	cd lean && lake build
 	test/phys_proof_mutation.sh
 
-verify: all proof test-prims mutation fasm-check route-check phys-check phys-mutation
+# M4b: the bitstream decoded and compared with the FASM; faulty copies of the
+# bitstream rejected by the reader or by the theorem.
+bit-check: $(BUILD)/$(TOP).bit
+	cd lean && lake build
+	cd lean && lake lean ../test/BitReport.lean
+	test/bit_mutation.sh
+
+verify: all proof test-prims mutation fasm-check route-check phys-check phys-mutation bit-check
 
 # SRAM load only; does not touch the configuration flash.
 program: $(BUILD)/$(TOP).bit

@@ -13,9 +13,14 @@ path = "../build/blinky.json"
 name = "blinkyFasm"
 path = "../build/blinky.fasm"
 
+# The bitstream for M4b.
+[[input_file]]
+name = "blinkyBit"
+path = "../build/blinky.bit"
+
 [[lean_lib]]
 name = "VeryFPGA"
-needs = ["blinkyJson", "blinkyFasm"]
+needs = ["blinkyJson", "blinkyFasm", "blinkyBit"]
 # Compile the library to native code so that the build-time decoders
 # (load_fasm, routing) run compiled instead of in the interpreter.
 precompileModules = true

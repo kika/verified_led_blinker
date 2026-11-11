@@ -140,3 +140,14 @@ Decisions (Kirill, 2026-11-10):
 - **`bv_decide` trust**: it relies on Lean's compiled evaluation of the
   certificate checker (`Lean.ofReduceBool`), which will show in
   `#print axioms` and must be listed in `TRUST.md`.
+
+## M4b
+
+Done 2026-11-11. `Bitstream.lean` decodes `build/blinky.bit` (header,
+packets, frames via `part.json`, ECC field excluded, features via segbits,
+every set bit explained); `BlinkyBit.lean` runs the same routing, grouping
+and site models and has the kernel check that the machine is `physMachine`,
+giving `bit_blinks`. `make bit-check`: decode report (281 features, equal to
+the FASM's bit-backed ones apart from the 15 without positive bits) and five
+faulty bitstream copies rejected. Model changes: `NOCLKINV` no longer
+required; featureless driving sites included.
