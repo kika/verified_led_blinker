@@ -171,11 +171,11 @@ end VeryFPGA.XRay
 namespace VeryFPGA
 
 open Lean Elab Command in
-/-- `load_fasm foo from "design.fasm" db "<family dir>" device "<die>"` parses
+/-- `load_fasm foo from "design.fasm" xray "<family dir>" "<die>"` parses
 the FASM file at build time, resolves every feature against the X-Ray
 database and defines `foo : List XRay.Feature`. Any error stops the build.
-A relative `db` path is taken relative to `$PRJXRAY_DB_DIR`. -/
-elab "load_fasm " id:ident " from " path:str " db " fam:str " device " dev:str : command => do
+The family directory is taken relative to `$PRJXRAY_DB_DIR`. -/
+elab "load_fasm " id:ident " from " path:str " xray " fam:str dev:str : command => do
   let some dbRoot ← IO.getEnv "PRJXRAY_DB_DIR"
     | throwError "load_fasm: PRJXRAY_DB_DIR is not set (source env.sh)"
   let lines ← match Fasm.parse (← IO.FS.readFile path.getString) with

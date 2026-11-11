@@ -172,3 +172,40 @@ theorem about the decoded design:
   in `TOOLS.md`. `PRJXRAY_DB_DIR` must be set (by `env.sh`) to build.
 
 Result on `build/blinky.fasm`: all 503 features found (`make fasm-check`).
+
+**M4a.2 (2026-11-11): physical wiring reconstructed.** Not yet part of any
+theorem. `lean/VeryFPGA/Route.lean` (run at build time by `route_fasm` in
+`BlinkyRoute.lean`) computes, for every input pin of every site in the
+FASM's tiles, the site output pin that drives it. Trusted once M4a.4 uses
+it; it rests on these readings of the X-Ray database, which are
+interpretations and should be confirmed against the bitstream in M4b:
+
+- Nodes are the closure of the `tileconn.json` joins, as in prjxray's
+  `node_model.py`. Site pin directions come from `site_type_*.json`.
+- A wire's driver is the enabled bit-backed PIPs and `always` pseudo-PIPs
+  into it; if none, its `default` pseudo-PIP. `default` is read as "the
+  connection a multiplexer makes when none of its PIPs is on", and `always`
+  as a permanent connection, whether or not the FASM lists them.
+- **Route-through rule:** a pseudo-PIP from an input-pin wire to an
+  output-pin wire of the *same* site (e.g. BUFHCE `I` -> `O`) describes the
+  path through that site, not routing. The site's output pin is taken as the
+  driver, and the site's configuration is left to the site models (M4a.3).
+  Without this rule the BUFHCE output node would have two drivers.
+- Site input pins with no tile wire in X-Ray (`null`, e.g. `REV`) are
+  recorded as unwired, not treated as driven.
+
+Hard errors (each tested by a faulty FASM copy, `make route-check`): a node
+with more than one driver; a FASM PIP on no traced path (a removed middle
+hop, a stray PIP); a FASM `default` pseudo-PIP on a wire that has another
+driver; a routing loop.
+
+Result on `build/blinky.fasm`: 831 site inputs traced (702 driven, 129
+undriven, all on unused sites), 23 unwired. The clock enters at G11
+(`IOB_X0Y26`, the master pad of tile `LIOB33_X0Y25`), not at the
+RP2040-driven F11 in the same tile, and reaches every slice `CLK` through
+`ILOGICE3 -> BUFGCTRL -> BUFHCE`. The LED pad is driven from `SLICEL.CQ` of
+tile `CLBLL_L_X2Y47` (counter bit 26) through `OLOGICE3.D1 -> OQ`.
+
+Open for M4a.3: the pads of F11 (`IOB33S`) and others have their `O` and `T`
+pins wired to output logic. That they do not drive is a property of their
+(absent) configuration, which the site models must check.

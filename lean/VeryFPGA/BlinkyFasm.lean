@@ -9,6 +9,6 @@ import VeryFPGA.XRay
 
 namespace VeryFPGA
 
-load_fasm blinkyFasm from "../build/blinky.fasm" db "spartan7" device "xc7s50"
+load_fasm blinkyFasm from "../build/blinky.fasm" xray "spartan7" "xc7s50"
 
 end VeryFPGA

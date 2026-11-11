@@ -18,7 +18,7 @@ CABLE  := ft232
 SYNTH_OPTS := -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp -nowidelut
 
 .DELETE_ON_ERROR:
-.PHONY: all program check-cells proof test-prims mutation fasm-check verify clean
+.PHONY: all program check-cells proof test-prims mutation fasm-check route-check verify clean
 
 all: $(BUILD)/$(TOP).bit check-cells
 
@@ -77,7 +77,13 @@ fasm-check: $(BUILD)/$(TOP).fasm
 	cd lean && lake build
 	cd lean && lake env lean ../test/FasmReport.lean
 
-verify: all proof test-prims mutation fasm-check
+# M4a.2: physical wiring reconstructed; faulty FASM copies rejected.
+route-check: $(BUILD)/$(TOP).fasm
+	cd lean && lake build
+	cd lean && lake lean ../test/RouteReport.lean
+	test/route_mutation.sh
+
+verify: all proof test-prims mutation fasm-check route-check
 
 # SRAM load only; does not touch the configuration flash.
 program: $(BUILD)/$(TOP).bit

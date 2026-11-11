@@ -16,3 +16,6 @@ path = "../build/blinky.fasm"
 [[lean_lib]]
 name = "VeryFPGA"
 needs = ["blinkyJson", "blinkyFasm"]
+# Compile the library to native code so that the build-time decoders
+# (load_fasm, routing) run compiled instead of in the interpreter.
+precompileModules = true
