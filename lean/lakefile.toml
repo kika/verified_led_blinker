@@ -8,6 +8,11 @@ defaultTargets = ["VeryFPGA"]
 name = "blinkyJson"
 path = "../build/blinky.json"
 
+# The routed design for M4.
+[[input_file]]
+name = "blinkyFasm"
+path = "../build/blinky.fasm"
+
 [[lean_lib]]
 name = "VeryFPGA"
-needs = ["blinkyJson"]
+needs = ["blinkyJson", "blinkyFasm"]

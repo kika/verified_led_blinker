@@ -18,7 +18,7 @@ CABLE  := ft232
 SYNTH_OPTS := -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp -nowidelut
 
 .DELETE_ON_ERROR:
-.PHONY: all program check-cells proof test-prims mutation verify clean
+.PHONY: all program check-cells proof test-prims mutation fasm-check verify clean
 
 all: $(BUILD)/$(TOP).bit check-cells
 
@@ -72,7 +72,12 @@ mutation: $(BUILD)/$(TOP).json
 	cd lean && lake build
 	test/mutation.sh
 
-verify: all proof test-prims mutation
+# M4a.1: every FASM feature parsed and found in the X-Ray database.
+fasm-check: $(BUILD)/$(TOP).fasm
+	cd lean && lake build
+	cd lean && lake env lean ../test/FasmReport.lean
+
+verify: all proof test-prims mutation fasm-check
 
 # SRAM load only; does not touch the configuration flash.
 program: $(BUILD)/$(TOP).bit

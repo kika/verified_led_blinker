@@ -108,7 +108,26 @@ Deviations from the original plan:
 
 ## M4
 
-Not started without Kirill's go-ahead.
+Go-ahead given 2026-11-10. M4a (FASM) in four steps, each with its own
+acceptance check and `jj` commit; M4b (bitstream) afterwards.
+
+Decisions (Kirill, 2026-11-10):
+- The M4a theorem is about the decoded FASM design against `Spec`
+  directly, reusing the M3 proof structure. It does not go through the Yosys
+  netlist.
+- Clock network: structural check only. Every flop's CLK must be reached from
+  the `clk` pad only through clock buffers and routing switches, each buffer
+  in a known pass-through configuration. Clock quality stays an assumption.
+- IO electrical features: allow-list of exactly the `board/astria.xdc`
+  settings (LVCMOS33, 12 mA, slow slew, no pull); anything else rejected;
+  listed in `TRUST.md` as electrical facts outside the theorem.
+
+| Step | Content | Acceptance |
+|---|---|---|
+| M4a.1 | FASM parser; loader for the needed X-Ray files; every FASM line accounted for, unknown = hard error | all lines classified; each feature exists in the X-Ray database. **Done 2026-11-11**: 503/503 |
+| M4a.2 | Physical wiring from enabled PIPs, tile wires and cross-tile connections | every used site input has exactly one driver; no enabled PIP unused |
+| M4a.3 | Site semantics (SLICEL, IOB/IOI, clock tree) compiled to `Machine` with a LUT node; trusted, from UG474 and prjxray docs | decoded machine simulates like the netlist machine (sanity check) |
+| M4a.4 | Refinement proof of the decoded machine against `Spec`; mutation tests on FASM copies (LUT `INIT` bit, rerouted PIP) | theorem proved, mutants rejected |
 
 ## Known risks
 

@@ -5,3 +5,6 @@ import VeryFPGA.Impl
 import VeryFPGA.DefByEval
 import VeryFPGA.Blinky
 import VeryFPGA.Refine
+import VeryFPGA.Fasm
+import VeryFPGA.XRay
+import VeryFPGA.BlinkyFasm

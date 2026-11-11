@@ -1,6 +1,7 @@
 # Trust ledger
 
-Status: **M3 (MVP complete)**, 2026-11-10.
+Status: **M3 (MVP complete)**, 2026-11-10. M4 in progress (see the M4
+section at the end); nothing from M4 is part of any theorem yet.
 
 ## What is proved
 
@@ -151,3 +152,23 @@ The `CYINIT` and `INIT` mutations replace the planned "flip one bit of a LUT
 `Spec.led_run (n) : led (run n) = true ↔ n % 2^N ≥ 2^(N-1)`, axioms
 `[propext, Quot.sound]`. The same script fails on a wrong threshold and on
 inverted polarity.
+
+## M4 in progress
+
+**M4a.1 (2026-11-11): FASM parsed and checked against X-Ray.** Not yet part
+of any theorem. New code that will become trusted once M4a.4 proves a
+theorem about the decoded design:
+
+- `lean/VeryFPGA/Fasm.lean`: FASM parser. Accepts only `TILE.FEATURE` and
+  `TILE.FEATURE[hi:lo] = W'b...`; rejects other number bases, single-bit
+  indexing, annotations and trailing comments.
+- `lean/VeryFPGA/XRay.lean`: reads `tilegrid.json`, `segbits_*.db` and
+  `ppips_*.db` (prjxray-db `a8b09269`, family `spartan7`, die `xc7s50`) and
+  classifies every feature as bit-backed, `always` pseudo-PIP or `default`
+  pseudo-PIP; follows the `*_SING` tile alias as prjxray's
+  `tile_segbits_alias.py` does. Rejects unknown features, `hint` pseudo-PIPs
+  and duplicate lines (tested on six broken copies).
+- The X-Ray database itself. Lake does not track it; its revision is pinned
+  in `TOOLS.md`. `PRJXRAY_DB_DIR` must be set (by `env.sh`) to build.
+
+Result on `build/blinky.fasm`: all 503 features found (`make fasm-check`).
