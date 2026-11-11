@@ -7,7 +7,8 @@ Nothing else pins these. Installed 2026-11-10 under `~/opt/veryfpga/` (and
 
 - Package: `openxc7-toolchain-linux-x86-64-20261109.tgz`, release `2026-11-09`
   (dated, not prerelease) of `github.com/cavearr/toolchain-openxc7-releases`.
-- SHA-256 verified against the release's `SHA256SUMS`.
+- SHA-256 `a44631408ec4972186ddd47810c16b54cb81ebc0b08d0f7f71c1525da83f84e5`,
+  verified against the release's `SHA256SUMS`.
 - Install dir: `~/opt/veryfpga/openxc7`. Full metadata: `~/opt/veryfpga/openxc7/BUILD-INFO.json`.
 
 | Component | Revision |
@@ -38,7 +39,7 @@ The chip database is prebuilt, one per die, in
 
 | Tool | Version |
 |---|---|
-| elan | 4.2.4 (227caca13 2026-08-25), installed with `--no-modify-path` |
+| elan | 4.2.4 (227caca13 2026-08-25), installed with `--no-modify-path` by `elan-init.sh` from the elan repository's `master` branch (SHA-256 of the script used: `a620ff1641616222c8d37c54845492004bb84d6877cdbc944dd65c1aa685bf53`); the script installs the latest elan release, so a later install may get a newer elan |
 | Lean toolchain | `leanprover/lean4:v4.35.0` (latest stable on 2026-11-10), pinned in `lean/lean-toolchain` |
 
 ## Smoke test (2026-11-10)
