@@ -1,5 +1,7 @@
 # VeryFPGA: a blinking LED with a proof
 
+(DO-178C and DO-333 compliance in the description is a joke)
+
 This project makes an LED blink on an FPGA board, and then proves, in the
 Lean theorem prover, that the configuration file actually loaded into the
 chip makes the LED blink.
