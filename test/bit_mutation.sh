@@ -2,7 +2,7 @@
 # M4b test: faulty copies of the bitstream must be rejected, either by the
 # bitstream reader or by the theorem that the bitstream's machine is
 # physMachine. The unchanged copy must pass. Run from the repository root
-# with env.sh sourced.
+# with .envrc loaded.
 set -u
 OUT=build/bit_mutation
 mkdir -p "$OUT"

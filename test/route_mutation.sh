@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # M4a.2 routing test: the router must reject faulty copies of the FASM.
 # The unchanged copy (control) must be accepted. Run from the repository
-# root with env.sh sourced.
+# root with .envrc loaded.
 set -u
 OUT=build/route_mutation
 mkdir -p "$OUT"

@@ -361,7 +361,7 @@ bitstream at build time into X-Ray features (same type as `load_fasm`) and
 defines `foo`. Any error stops the build. -/
 elab "load_bit " id:ident " from " path:str " xray " fam:str dev:str part:str : command => do
   let some dbRoot ← IO.getEnv "PRJXRAY_DB_DIR"
-    | throwError "load_bit: PRJXRAY_DB_DIR is not set (source env.sh)"
+    | throwError "load_bit: PRJXRAY_DB_DIR is not set (load .envrc: run `direnv allow` in the repository)"
   let r ← try Bitstream.decode s!"{dbRoot}/{fam.getString}" dev.getString part.getString path.getString
     catch e => throwError "bitstream rejected: {e.toMessageData}"
   let name := (← getCurrNamespace) ++ id.getId

@@ -177,7 +177,7 @@ database and defines `foo : List XRay.Feature`. Any error stops the build.
 The family directory is taken relative to `$PRJXRAY_DB_DIR`. -/
 elab "load_fasm " id:ident " from " path:str " xray " fam:str dev:str : command => do
   let some dbRoot ← IO.getEnv "PRJXRAY_DB_DIR"
-    | throwError "load_fasm: PRJXRAY_DB_DIR is not set (source env.sh)"
+    | throwError "load_fasm: PRJXRAY_DB_DIR is not set (load .envrc: run `direnv allow` in the repository)"
   let lines ← match Fasm.parse (← IO.FS.readFile path.getString) with
     | .ok ls => pure ls
     | .error e => throwError "FASM rejected: {e}"

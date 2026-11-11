@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # M3 mutation test: run the unchanged refinement proof against mutated copies
 # of the netlist. The control copy must pass; every mutant must fail.
-# Run from the repository root with env.sh sourced.
+# Run from the repository root with .envrc loaded.
 set -u
 OUT=build/mutation
 python3 -I test/mutate.py build/blinky.json "$OUT" || exit 1

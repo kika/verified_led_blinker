@@ -190,7 +190,7 @@ its routing, and defines `foo`. -/
 elab "load_phys " id:ident " from " fs:ident rt:ident " xray " fam:str dev:str part:str :
     command => do
   let some dbRoot ← IO.getEnv "PRJXRAY_DB_DIR"
-    | throwError "load_phys: PRJXRAY_DB_DIR is not set (source env.sh)"
+    | throwError "load_phys: PRJXRAY_DB_DIR is not set (load .envrc: run `direnv allow` in the repository)"
   let feats ← unsafe evalConst (List XRay.Feature)
     (← liftCoreM <| realizeGlobalConstNoOverloadWithInfo fs)
   let routing ← unsafe evalConst Route.Routing

@@ -1,4 +1,5 @@
-# Run with the tools from env.sh on PATH:  . ./env.sh && make
+# Run with the tools from .envrc on PATH (direnv loads it; in bash without
+# direnv: . ./.envrc && make)
 # Flow: yosys -> nextpnr-xilinx -> fasm2frames -> xc7frames2bit
 # Commands follow the openXC7 demo-projects openXC7.mk (yosys line, minus
 # -abc9, which gives the same cells here) and the

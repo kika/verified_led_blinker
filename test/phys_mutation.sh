@@ -3,7 +3,7 @@
 # differs from what the site models accept. The unchanged copy must be
 # accepted. Each mutation is a real X-Ray feature, so every copy gets past
 # the FASM check (M4a.1) and the routing (M4a.2). Run from the repository
-# root with env.sh sourced.
+# root with .envrc loaded.
 set -u
 OUT=build/phys_mutation
 mkdir -p "$OUT"

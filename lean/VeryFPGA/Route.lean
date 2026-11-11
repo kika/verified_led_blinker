@@ -363,7 +363,7 @@ site coordinates; for example in `LIOB33_X0Y25` the tile-local `X0Y1` site
 is global `IOB_X0Y26`, which FASM calls `IOB_Y0`. -/
 elab "route_fasm " id:ident " from " src:ident " xray " fam:str dev:str : command => do
   let some dbRoot ← IO.getEnv "PRJXRAY_DB_DIR"
-    | throwError "route_fasm: PRJXRAY_DB_DIR is not set (source env.sh)"
+    | throwError "route_fasm: PRJXRAY_DB_DIR is not set (load .envrc: run `direnv allow` in the repository)"
   let srcName ← liftCoreM <| realizeGlobalConstNoOverloadWithInfo src
   let feats ← unsafe evalConst (List XRay.Feature) srcName
   let root := s!"{dbRoot}/{fam.getString}"

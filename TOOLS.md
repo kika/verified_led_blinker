@@ -1,7 +1,7 @@
 # Tool versions
 
 Nothing else pins these. Installed 2026-11-10 under `~/opt/veryfpga/` (and
-`~/.elan/`). Put on `PATH` by `env.sh`.
+`~/.elan/`). Put on `PATH` by `.envrc` (loaded by direnv).
 
 ## openXC7 toolchain
 

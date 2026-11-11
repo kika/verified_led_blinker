@@ -150,7 +150,7 @@ curl -LO https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-1
 echo "8b4ee0a8071df1e20d3497c4fc11d66cc69991bd3e97903d56cc689c41fdea9a  oss-cad-suite-linux-x64-20261104.tgz" | sha256sum -c
 tar xzf oss-cad-suite-linux-x64-20261104.tgz      # creates oss-cad-suite/
 
-# 3. elan, without touching your shell profile (env.sh puts it on PATH)
+# 3. elan, without touching your shell profile (.envrc puts it on PATH)
 curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
 sh elan-init.sh -y --no-modify-path --default-toolchain none
 ```
@@ -158,6 +158,12 @@ sh elan-init.sh -y --no-modify-path --default-toolchain none
 The Lean version itself is pinned in `lean/lean-toolchain`; the first
 `lake build` downloads it. Exact versions and hashes of everything are in
 `TOOLS.md`.
+
+`.envrc` at the repository root puts the tools on `PATH` and sets the
+database locations. With [direnv](https://direnv.net), run `direnv allow`
+once in the repository and it is loaded whenever you enter the directory,
+in any shell direnv supports (bash, zsh, fish). Without direnv, load it by
+hand in bash or zsh: `. ./.envrc`.
 
 To load the board over its built-in FTDI FT232H JTAG adapter without root,
 install the udev rule (the one host-level change):
@@ -168,12 +174,13 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
 Then replug the board and check with `openFPGALoader -c ft232 --detect`
-(after `. ./env.sh`); it should report an xc7s50.
+(with `.envrc` loaded); it should report an xc7s50.
 
 ## Running it
 
+With `.envrc` loaded (see above):
+
 ```sh
-. ./env.sh          # put the tools on PATH
 make                # Verilog -> netlist -> FASM -> bitstream
 make verify         # build, run all proofs and all tests
 make program        # load the bitstream into the FPGA (SRAM only)
@@ -187,6 +194,7 @@ changes, so a proof cannot be paired with a stale bitstream.
 ## Repository layout
 
 ```
+.envrc                    tool paths and database locations (direnv)
 rtl/blinky.v              the design (untrusted input)
 board/                    board facts, pin constraints, udev rule
 lean/VeryFPGA/

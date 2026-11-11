@@ -2,7 +2,7 @@
 # M4a.4 mutation test: the unchanged routed-design proof (BlinkyPhys.lean +
 # PhysRefine.lean) must fail on FASM copies with one logic change that the
 # FASM check, the routing and the site models all accept. The unchanged copy
-# must pass. Run from the repository root with env.sh sourced.
+# must pass. Run from the repository root with .envrc loaded.
 set -u
 OUT=build/phys_proof_mutation
 mkdir -p "$OUT"
