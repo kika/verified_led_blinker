@@ -18,6 +18,29 @@ def inv (i : Bool) : Bool := !i
 clock-network driver; logically they pass the value through. -/
 def buf (i : Bool) : Bool := i
 
+/-- Entries at even positions 0, 2, 4, ... of a list. -/
+def evens {α : Type} : List α → List α
+  | a :: _ :: t => a :: evens t
+  | [a] => [a]
+  | [] => []
+
+/-- Entries at odd positions 1, 3, 5, ... of a list. -/
+def odds {α : Type} : List α → List α
+  | _ :: b :: t => b :: odds t
+  | _ => []
+
+/-- A look-up table. `init` is the truth table, entry 0 first; `ins` are the
+inputs `[A1, A2, ...]`. The output is entry number
+`A1 + 2*A2 + 4*A3 + ...` (A1 least significant, as in UG953's `LUT6` with
+`I0` = A1). Written as a Shannon expansion on A1: if A1 is 1 the entry
+number is odd, so only the odd entries remain, indexed by the other
+inputs; if 0, the even ones. Used for `LUT1`..`LUT6` and for the `O6`
+(six inputs, 64 entries) and `O5` (five inputs, the lower 32 entries)
+outputs of a 7-series slice LUT. -/
+def lut : List Bool → List Bool → Bool
+  | init, [] => init.headD false
+  | init, a :: rest => if a then lut (odds init) rest else lut (evens init) rest
+
 /-- `FDRE`: D flip-flop with clock enable and synchronous reset, rising edge.
 This is the value `Q` takes at the next clock edge, given the current inputs
 and the current `Q`. Only the default parameter values are modelled

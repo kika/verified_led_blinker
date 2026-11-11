@@ -10,3 +10,6 @@ import VeryFPGA.XRay
 import VeryFPGA.BlinkyFasm
 import VeryFPGA.Route
 import VeryFPGA.BlinkyRoute
+import VeryFPGA.Phys
+import VeryFPGA.PhysImpl
+import VeryFPGA.BlinkyPhys

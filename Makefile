@@ -18,7 +18,7 @@ CABLE  := ft232
 SYNTH_OPTS := -flatten -arch xc7 -nosrl -nobram -nolutram -nodsp -nowidelut
 
 .DELETE_ON_ERROR:
-.PHONY: all program check-cells proof test-prims mutation fasm-check route-check verify clean
+.PHONY: all program check-cells proof test-prims mutation fasm-check route-check phys-check verify clean
 
 all: $(BUILD)/$(TOP).bit check-cells
 
@@ -83,7 +83,14 @@ route-check: $(BUILD)/$(TOP).fasm
 	cd lean && lake lean ../test/RouteReport.lean
 	test/route_mutation.sh
 
-verify: all proof test-prims mutation fasm-check route-check
+# M4a.3: the decoded design simulates like the specification; the site models
+# refuse configurations they do not cover.
+phys-check: $(BUILD)/$(TOP).fasm
+	cd lean && lake build
+	cd lean && lake lean ../test/PhysSim.lean
+	test/phys_mutation.sh
+
+verify: all proof test-prims mutation fasm-check route-check phys-check
 
 # SRAM load only; does not touch the configuration flash.
 program: $(BUILD)/$(TOP).bit

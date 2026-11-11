@@ -209,3 +209,37 @@ tile `CLBLL_L_X2Y47` (counter bit 26) through `OLOGICE3.D1 -> OQ`.
 Open for M4a.3: the pads of F11 (`IOB33S`) and others have their `O` and `T`
 pins wired to output logic. That they do not drive is a property of their
 (absent) configuration, which the site models must check.
+
+**M4a.3 (2026-11-11): site models.** Not yet part of any theorem.
+`lean/VeryFPGA/Phys.lean` groups the FASM features by site and attaches the
+routing (build time, `load_phys`); `lean/VeryFPGA/PhysImpl.lean` defines
+`physCompile : PhysDesign → Option Machine`, the meaning of the configured
+sites. `physCompile blinkyPhys = some physMachine` is checked by the kernel
+(`BlinkyPhys.lean`), as are `clockPad = some "G11"` and `ledPad = some "E11"`.
+The new trusted content, with where each meaning comes from:
+
+| Item | Meaning used | Source |
+|---|---|---|
+| LUT `INIT` | output = entry `A1 + 2*A2 + ... + 32*A6`; `O6` all 64 entries, `O5` the lower 32 with A1..A5 | UG953 LUT6 convention, UG474 for `O5`/`O6`; `Prims.lut` matches Yosys `LUT6` on 256 vectors. That the FASM `INIT[i]` is the LUT6 `INIT[i]` is prjxray's convention, not documented |
+| `?FF.ZINI` | set: power-up value 0 | prjxray 011-clb-ffconfig |
+| `?FF.ZRST`, `FFSYNC` | set: synchronous reset to 0 | 011-clb-ffconfig |
+| `CEUSEDMUX`, `SRUSEDMUX` | absent: CE = 1, never reset | 011, 014-clb-ffsrcemux |
+| `PRECYINIT.*` | carry-in from `CIN`, `AX`, 1; none set: 0 (the `C0` bit pattern is all zeros) | 017-clb-precyinit, `segbits_clbll_l.db` |
+| `CARRY4.?CY0` | set: `DI` = `O5`, else the bypass pin | 013-clb-ncy0 |
+| `?FFMUX.XOR`, `?FFMUX.O6` | flip-flop `D` from the carry sum / LUT `O6` | 015-clb-nffmux (names only) and UG474 |
+| CARRY4 `S` = LUT `O6`; slice outputs `A`..`D` = `O6`; `?Q` = flip-flop | | UG474 |
+| `NOCLKINV` | required on slices with used flip-flops (rising edge) | 011 (as `CLKINV`); conservative |
+| `ZINV_X` | set means input `X` not inverted | feature names; consistent with the working board (BUFGCTRL `CE0` and OLOGIC `T1` both tied to 1) |
+| OLOGIC `OMUX.D1` + `OQUSED` | `OQ = D1` | feature names only |
+| OLOGIC `DATA_RATE_TQ.BUF` | `TQ = T1` (inverted unless `ZINV_T1`) | feature names only |
+| LED pad | level = `O` input; tristate `T` must be the constant 0 | UG471 |
+| BUFHCE, BUFGCTRL, ILOGICE3, IDELAYE2 | checked as pass-through, not modelled | decision of 2026-11-10 |
+| IO electrical settings, clock tile enables | allow-lists | decision of 2026-11-10 |
+| IOBs with no features (e.g. F11) | do not drive their pad | assumption: unconfigured IOB output buffers are off |
+
+Tests: the decoded machine powers up at 0, counts 0..4999 from power-up,
+and on 2000 random states one step adds 1 with the LED output equal to bit
+26 (`make phys-check`, simulation). Five configuration changes are each
+refused for the intended reason: an unmodelled output selector, a
+falling-edge clock, 4 mA LED drive, the LED tristate no longer 0, and a
+clock buffer that no longer passes its input.

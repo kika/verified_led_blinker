@@ -50,6 +50,12 @@ inductive Sig where
   | carry4 (pin : CarryPin) (ci cyinit d0 d1 d2 d3 s0 s1 s2 s3 : Sig)
   /-- The next value of a flop, from its `R`, `CE`, `D` inputs and current `Q`. -/
   | fdre (r ce d q : Sig)
+  /-- A six-input LUT (`init` has 64 entries), inputs A1..A6. Used for the
+  `O6` output of a slice LUT (M4). -/
+  | lut6 (init : List Bool) (a1 a2 a3 a4 a5 a6 : Sig)
+  /-- A five-input LUT (`init` has 32 entries), inputs A1..A5. Used for the
+  `O5` output of a slice LUT, which reads the lower half of its INIT (M4). -/
+  | lut5 (init : List Bool) (a1 a2 a3 a4 a5 : Sig)
   deriving Repr, Inhabited, Lean.ToExpr
 
 /-- The value of a signal in state `st`. `List.getD st k false` is element
@@ -63,6 +69,23 @@ def Sig.eval (st : List Bool) : Sig → Bool
     pin.get (Prims.carry4 (ci.eval st) (cyinit.eval st) (d0.eval st) (d1.eval st)
       (d2.eval st) (d3.eval st) (s0.eval st) (s1.eval st) (s2.eval st) (s3.eval st))
   | .fdre r ce d q => Prims.fdreNext (r.eval st) (ce.eval st) (d.eval st) (q.eval st)
+  | .lut6 init a1 a2 a3 a4 a5 a6 =>
+    Prims.lut init [a1.eval st, a2.eval st, a3.eval st, a4.eval st, a5.eval st, a6.eval st]
+  | .lut5 init a1 a2 a3 a4 a5 =>
+    Prims.lut init [a1.eval st, a2.eval st, a3.eval st, a4.eval st, a5.eval st]
+
+/-- A signal with no flop leaves: its value does not depend on the state. -/
+def Sig.closed : Sig → Bool
+  | .const _ => true
+  | .flop _ => false
+  | .inv a => a.closed
+  | .carry4 _ ci cyinit d0 d1 d2 d3 s0 s1 s2 s3 =>
+    ci.closed && cyinit.closed && d0.closed && d1.closed && d2.closed && d3.closed &&
+      s0.closed && s1.closed && s2.closed && s3.closed
+  | .fdre r ce d q => r.closed && ce.closed && d.closed && q.closed
+  | .lut6 _ a1 a2 a3 a4 a5 a6 =>
+    a1.closed && a2.closed && a3.closed && a4.closed && a5.closed && a6.closed
+  | .lut5 _ a1 a2 a3 a4 a5 => a1.closed && a2.closed && a3.closed && a4.closed && a5.closed
 
 /-- What drives a net: a cell output, with the cell's inputs. -/
 inductive Driver where

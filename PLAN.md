@@ -126,7 +126,7 @@ Decisions (Kirill, 2026-11-10):
 |---|---|---|
 | M4a.1 | FASM parser; loader for the needed X-Ray files; every FASM line accounted for, unknown = hard error | all lines classified; each feature exists in the X-Ray database. **Done 2026-11-11**: 503/503 |
 | M4a.2 | Physical wiring from enabled PIPs, tile wires and cross-tile connections | every used site input has exactly one driver; no enabled PIP unused. **Done 2026-11-11** |
-| M4a.3 | Site semantics (SLICEL, IOB/IOI, clock tree) compiled to `Machine` with a LUT node; trusted, from UG474 and prjxray docs | decoded machine simulates like the netlist machine (sanity check) |
+| M4a.3 | Site semantics (SLICEL, IOB/IOI, clock tree) compiled to `Machine` with a LUT node; trusted, from UG474 and prjxray docs | decoded machine simulates like the netlist machine (sanity check). **Done 2026-11-11**: simulated against the spec directly (counts, random-state steps) |
 | M4a.4 | Refinement proof of the decoded machine against `Spec`; mutation tests on FASM copies (LUT `INIT` bit, rerouted PIP) | theorem proved, mutants rejected |
 
 ## Known risks

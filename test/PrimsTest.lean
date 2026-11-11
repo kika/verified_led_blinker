@@ -37,6 +37,14 @@ def checkLine (line : String) : Except String Unit := do
           let [b] ← field x | throw "width"
           pure b) do
       throw s!"INV/IBUF/OBUF/BUFG mismatch: {line}"
+  | ["LUT6", init, ins, o] =>
+    -- `field` gives LSB first: INIT entry 0 first, inputs [I0 = A1, ..., I5 = A6].
+    let initBits ← field init
+    let inBits ← field ins
+    let [o] ← field o | throw "width"
+    unless initBits.length == 64 && inBits.length == 6 do throw s!"LUT6 widths: {line}"
+    unless Prims.lut initBits inBits == o do
+      throw s!"LUT6 mismatch: {line}"
   | ["FDRE", q0, r, ce, d, q] =>
     let [q0] ← field q0 | throw "width"
     let [r] ← field r | throw "width"
@@ -56,4 +64,5 @@ def checkLine (line : String) : Except String Unit := do
     | .error e => throw (IO.userError e)
   let count (p : String) := (lines.filter (·.startsWith p)).length
   IO.println s!"Prims match cells_sim.v on all {lines.length} vectors \
-    (CARRY4 {count "CARRY4 "}, INV/IBUF/OBUF/BUFG {count "BUF "}, FDRE {count "FDRE "})"
+    (CARRY4 {count "CARRY4 "}, LUT6 {count "LUT6 "}, INV/IBUF/OBUF/BUFG {count "BUF "}, \
+    FDRE {count "FDRE "})"
