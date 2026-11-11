@@ -174,9 +174,12 @@ and a `jj` commit. Stop and report at the end of each one.
   current README of whichever you use; do not rely on remembered commands.
 - Install Lean with `elan` (user-level installer), create the `lake` project,
   pin the toolchain in `lean-toolchain`.
-- `env.sh` at the repo root that puts the tools on `PATH` and exports the
-  chipdb and X-Ray database locations. `TOOLS.md` recording the exact version
-  or release of every tool, since nothing else pins them.
+- `.envrc` at the repo root (loaded by direnv, which Kirill uses) that puts
+  the tools on `PATH` and exports the chipdb and X-Ray database locations.
+  It must stay plain `export` lines so it also works as `. ./.envrc` in
+  bash; in this agent's shell, which has no direnv, load it that way.
+  `TOOLS.md` recording the exact version or release of every tool, since
+  nothing else pins them.
 - Fill in `board/FACTS.md`.
 - Chip database: generate one for `xc7s50ftgb196` from the X-Ray database
   with nextpnr-xilinx's own export scripts (the openXC7 demo projects and
@@ -327,7 +330,7 @@ verified" is only true relative to the list above.
 ## Suggested layout
 
 ```
-env.sh               tool paths and database locations
+.envrc               tool paths and database locations (direnv)
 TOOLS.md             exact tool versions in use
 CLAUDE.md            this file
 TRUST.md             trust ledger
