@@ -14,28 +14,6 @@ Lean, with a checker that decodes the final bitstream and proves it equivalent
 to the Lean source. Every decision here should keep that path open, but do not
 build any of it early.
 
-## Who you are working with
-
-Kirill. Strong systems programmer (Rust, C++, Nix, Linux), comfortable with
-formal mathematics and proofs. Two gaps to work with:
-
-- **Lean: beginner, learning as we go.** When you introduce a Lean construct,
-  tactic, or library lemma for the first time, add a one or two line
-  explanation of what it does and why it is needed here. Prefer readable
-  proofs over short ones. Never leave him with a proof he cannot read.
-- **Hardware: knowledgeable but about 30 years stale.** He knows gates, flops,
-  LUT-based FPGAs, timing, schematic-era design. He does not know the modern
-  toolchain. See the primer below and explain anything beyond it.
-
-Preferences: no flattery; do not guess when unsure, ask. Version control is
-Jujutsu (`jj`), not raw git. Diagrams in Mermaid.
-
-Host: an Ubuntu x86-64 workstation. No Nix for this project. Install tools
-into the user's home directory, not system-wide, and do not change system
-packages or configuration without asking. The one expected host-level change
-is a udev rule so the JTAG USB device is usable without root; propose it and
-let Kirill apply it.
-
 ## Primer: what changed in FPGAs since the mid 90s
 
 - **Logic cell.** 7-series uses 6-input LUTs (64-bit truth table, the `INIT`
